@@ -10,13 +10,15 @@ This is my attemp to solve the Gamblers problem example 4.3 Sutton, using value 
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 from plotly.offline import plot
 
 #initializing input variables
 p_h=0.4 #prob of head
 p_t=1-p_h #prob of tail
 no_of_iter = 100 #max no. of value iterations to be made
-tol=0.00001 #tolerance value for accepting convergence
+tol=0.0000001 #tolerance value for accepting convergence
 
 #declaring a policy construct
 pol1=np.ones(100)
@@ -53,34 +55,34 @@ for iteration in range(no_of_iter):
     vold=val.copy()
     for s in range(1,100,1):#This is an inplace value update algorithm
         print("start of state "+np.str(s))
-        for a in range(1,s,1):
+        for a in range(1,s+1,1):
             q[s,a]=p_t*val[s-a]+0.4*val[min(s+a,100)]
             #print(v[s,a])
         val[s]= max(q[s,:])
-        print("value of state "+str(s)+" is "+str(max(q[s,:])))
         print("value of state "+str(s)+" is "+str(val[s]))
         pol1[s]=np.argmax(q[s,:])
         #print("value for state "+str(s)+" is :"+str(val[s]))
-        if (iteration==(no_of_iter-1)):
-            print("optimal amount to be bet in state "+str(s)+" is "+str(pol1[s]))
-    
+        
     diff=sum(abs(vold-val))
-    print("difference in value functions after iteration "+str(iteration)+"is "+str(diff))
+    print("difference in value functions after iteration "+str(iteration)+"is below :")
     
     print(max([abs(val[s]-vold[s]) for s in range(1,100,1)]))
     if(diff<tol):
         print("tolerance met so exiting the value iteration loop !")
-        #break
+        break
      
 valf=val[1:100]
+fig=make_subplots(rows=1,cols=2)
 df=pd.DataFrame(pd.concat([pd.Series(state),pd.Series(pol1)],axis=1))
 df.columns=["state","optimalaction"]
-fig=px.line(df,x="state",y="optimalaction",title="final converged value funcion")
-#fig.show()
-plot(fig)   
-    
+fig.add_trace(go.Scatter(x=df["state"],y=df["optimalaction"],name="optimal policy"),row=1,col=1)
+
+
+
 df1=pd.DataFrame(pd.concat([pd.Series(state),pd.Series(valf)],axis=1))
 df1.columns=["state","optimalvalue"]
-fig1=px.line(df1,x="state",y="optimalvalue",title="final converged value funcion")
-#fig.show()
-plot(fig1)  
+fig.add_trace(go.Scatter(x=df1["state"],y=df1["optimalvalue"],name="optimal value function"),row=1,col=2)
+fig.update_layout(height=600,width=1200,title="final converged Optimal policy and value funcion")
+plot(fig)  
+
+print("Printed the optimal value function")
